@@ -1,0 +1,16 @@
+services:
+  warehouse-sample-db:
+    image: postgres:16.3-alpine
+    container_name: csharp-todo-db
+    hostname: csharp-todo-db
+    environment:
+      - POSTGRES_USER=warehouse-service
+      - POSTGRES_PASSWORD=Nakuo8qu
+      - POSTGRES_DB=warehouse
+    volumes:
+      - warehouse_sample_db_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5479:5432"
+
+volumes:
+  warehouse_sample_db_data:
