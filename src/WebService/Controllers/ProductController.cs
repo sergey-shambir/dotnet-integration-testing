@@ -34,7 +34,7 @@ public class ProductController(WarehouseDbContext dbContext) : ControllerBase
     }
 
     [HttpPut("{productId:int}")]
-    public async Task<ActionResult<int>> AddProduct(
+    public async Task<ActionResult<int>> UpdateProduct(
         [FromRoute] int productId,
         [FromBody] ProductParams productParams
     )

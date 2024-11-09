@@ -1,6 +1,11 @@
+# Build output
 bin/
 obj/
 
+# Draw.io backup
+*.bkp
+
+# IDE settings
 /.vscode/
 /.idea/
 /*.sln.DotSettings.user

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+set -o errexit
+
+exec docker exec -it csharp-todo-db psql --host=127.0.0.1 --username=warehouse-service warehouse
