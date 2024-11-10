@@ -2,6 +2,9 @@
 bin/
 obj/
 
+# Generated files
+*.feature.cs
+
 # Draw.io backup
 *.bkp
 
