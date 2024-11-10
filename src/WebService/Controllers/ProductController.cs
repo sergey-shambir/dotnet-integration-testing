@@ -30,11 +30,11 @@ public class ProductController(WarehouseDbContext dbContext) : ControllerBase
         dbContext.Products.Add(product);
         await dbContext.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(new { product.Id });
     }
 
     [HttpPut("{productId:int}")]
-    public async Task<ActionResult<int>> UpdateProduct(
+    public async Task<ActionResult> UpdateProduct(
         [FromRoute] int productId,
         [FromBody] ProductParams productParams
     )
@@ -52,7 +52,7 @@ public class ProductController(WarehouseDbContext dbContext) : ControllerBase
         dbContext.Products.Update(product);
         await dbContext.SaveChangesAsync();
 
-        return product.Id;
+        return NoContent();
     }
 
     [HttpDelete("{productId:int}")]
