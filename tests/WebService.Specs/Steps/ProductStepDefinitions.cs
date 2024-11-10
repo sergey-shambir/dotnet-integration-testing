@@ -1,29 +1,30 @@
 using Reqnroll;
+using WebService.Specs.Drivers;
+using WebService.Specs.Fixture;
 
 namespace WebService.Specs.Steps;
 
 [Binding]
-public class ProductStepDefinitions
+public class ProductStepDefinitions(TestServerFixture fixture)
 {
-    private List<ProductData> _actual = [];
+    private readonly ProductApiTestDriver _driver = new(fixture.HttpClient);
 
     [When(@"добавляем продукты:")]
-    public void КогдаДобавляемПродукты(Table table)
+    public async Task КогдаДобавляемПродукты(Table table)
     {
-        _actual = table.CreateSet<ProductData>().ToList();
+        List<TestProductData> products = table.CreateSet<TestProductData>().ToList();
+        foreach (TestProductData product in products)
+        {
+            await _driver.AddProduct(product);
+        }
     }
 
     [Then(@"получим список продуктов:")]
-    public void ТогдаПолучимСписокПродуктов(Table table)
+    public async Task ТогдаПолучимСписокПродуктов(Table table)
     {
-        List<ProductData> expected = table.CreateSet<ProductData>().ToList();
-        Assert.Equivalent(_actual, expected);
+        List<TestProductData> expected = table.CreateSet<TestProductData>().ToList();
+        List<TestProductData> actual = await _driver.ListProducts();
+        Assert.Equal(expected.Count, actual.Count);
+        Assert.Equivalent(expected, actual);
     }
-
-    private record ProductData(
-        string Code,
-        string Description,
-        decimal Price,
-        uint StockQuantity
-    );
 }
