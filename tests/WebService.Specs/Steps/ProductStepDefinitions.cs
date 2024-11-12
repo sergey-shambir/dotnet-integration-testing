@@ -7,7 +7,7 @@ namespace WebService.Specs.Steps;
 [Binding]
 public class ProductStepDefinitions(TestServerFixture fixture)
 {
-    private readonly ProductApiTestDriver _driver = new(fixture.HttpClient);
+    private readonly ProductApiTestDriver _driver = new(fixture);
 
     [When(@"добавляем продукты:")]
     public async Task КогдаДобавляемПродукты(Table table)

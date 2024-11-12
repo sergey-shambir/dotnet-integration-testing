@@ -1,13 +1,16 @@
 using System.Net.Http.Json;
 using Newtonsoft.Json;
+using WebService.Specs.Fixture;
 
 namespace WebService.Specs.Drivers;
 
-public class ProductApiTestDriver(HttpClient httpClient)
+public class ProductApiTestDriver(ITestServerFixture fixture)
 {
+    private HttpClient HttpClient => fixture.HttpClient;
+
     public async Task<List<TestProductData>> ListProducts()
     {
-        var response = await httpClient.GetAsync("/api/products");
+        var response = await HttpClient.GetAsync("/api/products");
         await EnsureSuccessStatusCode(response);
 
         string content = await response.Content.ReadAsStringAsync();
@@ -17,7 +20,7 @@ public class ProductApiTestDriver(HttpClient httpClient)
 
     public async Task AddProduct(TestProductData product)
     {
-        var response = await httpClient.PostAsJsonAsync("/api/products", product);
+        var response = await HttpClient.PostAsJsonAsync("/api/products", product);
         await EnsureSuccessStatusCode(response);
     }
 
