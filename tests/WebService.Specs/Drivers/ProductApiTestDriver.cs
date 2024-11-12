@@ -18,9 +18,21 @@ public class ProductApiTestDriver(ITestServerFixture fixture)
                ?? throw new ArgumentException($"Unexpected JSON response: {content}");
     }
 
-    public async Task AddProduct(TestProductData product)
+    public async Task<int> AddProduct(TestProductData product)
     {
         var response = await HttpClient.PostAsJsonAsync("/api/products", product);
+        await EnsureSuccessStatusCode(response);
+
+        string content = await response.Content.ReadAsStringAsync();
+        AddProductResult result = JsonConvert.DeserializeObject<AddProductResult>(content)
+                                  ?? throw new FormatException($"Unexpected response: {content}");
+
+        return result.Id;
+    }
+
+    public async Task UpdateProduct(int productId, TestProductData product)
+    {
+        var response = await HttpClient.PutAsJsonAsync($"/api/products/{productId}", product);
         await EnsureSuccessStatusCode(response);
     }
 
@@ -32,4 +44,6 @@ public class ProductApiTestDriver(ITestServerFixture fixture)
             Assert.Fail($"HTTP status code {response.StatusCode}: {content}");
         }
     }
+
+    private record AddProductResult(int Id);
 }
