@@ -47,7 +47,7 @@ public class ProductApiTestDriver(ITestServerFixture fixture)
         if (!response.IsSuccessStatusCode)
         {
             string content = await response.Content.ReadAsStringAsync();
-            Assert.Fail($"HTTP status code {response.StatusCode}: {content}");
+            throw new ApiClientException(response.StatusCode, content);
         }
     }
 
