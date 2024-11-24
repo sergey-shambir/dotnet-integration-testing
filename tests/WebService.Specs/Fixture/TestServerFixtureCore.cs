@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using Reqnroll;
-using Testcontainers.PostgreSql;
+using WebService.Specs.Fixture.Containers;
 
 namespace WebService.Specs.Fixture;
 
@@ -10,36 +10,29 @@ public class TestServerFixtureCore : IAsyncDisposable
 {
     private static readonly ConcurrentDictionary<int, TestServerFixtureCore> InstanceMap = [];
 
+    private readonly ITestContainersHost _testContainersHost;
+    private HttpClient? _httpClient;
+    private ScenarioTransaction? _scenarioTransaction;
+    private bool _initialized;
+
     public static TestServerFixtureCore Instance => InstanceMap.GetOrAdd(
         Environment.CurrentManagedThreadId,
         _ => new TestServerFixtureCore()
     );
 
-    private HttpClient? _httpClient;
-    private ScenarioTransaction? _scenarioTransaction;
-    private bool _initialized;
-
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("postgres:16.4-alpine")
-        .WithDatabase("warehouse")
-        .WithTmpfsMount("/var/lib/postgresql/data")
-        .Build();
-
     public HttpClient HttpClient => _httpClient ?? throw new InvalidOperationException("Fixture was not initialized");
-
-    public string ConnectionString => _container.GetConnectionString();
 
     public async Task InitializeScenario()
     {
         if (!_initialized)
         {
-            await _container.StartAsync();
-            CustomWebApplicationFactory<Program> factory = new(AttachDbContext, ConnectionString);
+            await _testContainersHost.StartAsync();
+            CustomWebApplicationFactory<Program> factory = new(AttachDbContext, _testContainersHost.GetConnectionString());
             _httpClient = factory.CreateClient();
             _initialized = true;
         }
 
-        _scenarioTransaction = await ScenarioTransaction.Create(_container.GetConnectionString());
+        _scenarioTransaction = await ScenarioTransaction.Create(_testContainersHost.GetConnectionString());
     }
 
     public async Task ShutdownScenario()
@@ -55,6 +48,8 @@ public class TestServerFixtureCore : IAsyncDisposable
 
     private TestServerFixtureCore()
     {
+        _testContainersHost = ExternalTestContainersHost.TryCreate() ??
+                              (ITestContainersHost)new DefaultTestContainersHost();
     }
 
     [AfterTestRun]
@@ -69,7 +64,7 @@ public class TestServerFixtureCore : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         _httpClient = null;
-        await _container.DisposeAsync();
+        await _testContainersHost.DisposeAsync();
     }
 
     private void AttachDbContext(DbContext dbContext)
