@@ -17,14 +17,14 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Выполняем
+// Выполняем миграции
 using (IServiceScope scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<WarehouseDbContext>();
     await dbContext.Database.MigrateAsync();
 }
 
-// Configure the HTTP request pipeline.
+// Конфигурируем конвейер обработки HTTP запросов.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

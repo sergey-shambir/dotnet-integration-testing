@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebService.Database;
@@ -69,9 +70,9 @@ public class ProductController(WarehouseDbContext dbContext) : ControllerBase
     }
 
     public record ProductParams(
-        string Code,
-        string Description,
-        decimal Price,
-        uint StockQuantity
+        [Required] string Code,
+        [Required] string Description,
+        [Required] [Range(0.01, 1e10)] decimal Price,
+        [Range(1, uint.MaxValue)] uint StockQuantity
     );
 }
