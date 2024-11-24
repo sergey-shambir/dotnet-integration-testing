@@ -36,6 +36,12 @@ public class ProductApiTestDriver(ITestServerFixture fixture)
         await EnsureSuccessStatusCode(response);
     }
 
+    public async Task DeleteProduct(int productId)
+    {
+        var response = await HttpClient.DeleteAsync($"/api/products/{productId}");
+        await EnsureSuccessStatusCode(response);
+    }
+
     private static async Task EnsureSuccessStatusCode(HttpResponseMessage response)
     {
         if (!response.IsSuccessStatusCode)

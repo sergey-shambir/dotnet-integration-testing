@@ -37,6 +37,17 @@ public class ProductStepDefinitions(TestServerFixture fixture)
         }
     }
 
+    [When(@"удаляем продукт с кодом ""(.*)""")]
+    public async Task КогдаУдаляемПродуктСКодом(string productCode)
+    {
+        if (!_codeToIdMap.TryGetValue(productCode, out int productId))
+        {
+            throw new ArgumentException($"Unexpected product code {productCode}");
+        }
+
+        await _driver.DeleteProduct(productId);
+    }
+
     [Then(@"получим список продуктов:")]
     public async Task ТогдаПолучимСписокПродуктов(Table table)
     {
