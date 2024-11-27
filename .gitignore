@@ -5,6 +5,8 @@ obj/
 # Draw.io backup
 *.bkp
 
+*.feature.cs
+
 # IDE settings
 /.vscode/
 /.idea/
