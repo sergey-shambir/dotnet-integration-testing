@@ -23,8 +23,21 @@ public class DefaultTestContainersHost : ITestContainersHost
         await _container.DisposeAsync();
     }
 
-    public string GetConnectionString()
+    public Task<TemporaryDatabase> CreateDatabase(string databaseName)
     {
-        return _container.GetConnectionString();
+        return TemporaryDatabase.Create(new PostgresContainerProxy(_container), databaseName);
+    }
+
+    private class PostgresContainerProxy(PostgreSqlContainer container) : IPostgresContainer
+    {
+        public string GetConnectionString()
+        {
+            return container.GetConnectionString();
+        }
+
+        public Task ExecuteSql(string sql)
+        {
+            return container.ExecScriptAsync(sql);
+        }
     }
 }

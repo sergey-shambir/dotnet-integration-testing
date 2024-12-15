@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql;
+
 namespace WebService.Specs.Fixture.Containers;
 
 /// <summary>
@@ -35,8 +38,24 @@ public class ExternalTestContainersHost : ITestContainersHost
         return Task.CompletedTask;
     }
 
-    string ITestContainersHost.GetConnectionString()
+    Task<TemporaryDatabase> ITestContainersHost.CreateDatabase(string databaseName)
     {
-        return _mainConnectionString;
+        return TemporaryDatabase.Create(new ExternalPostgresContainer(_mainConnectionString), databaseName);
+    }
+
+    private class ExternalPostgresContainer(string connectionString) : IPostgresContainer
+    {
+        public string GetConnectionString()
+        {
+            return connectionString;
+        }
+
+        public async Task ExecuteSql(string sql)
+        {
+            await using NpgsqlConnection connection = new NpgsqlConnection(connectionString);
+            await using NpgsqlCommand command = new(sql, connection);
+
+            await command.ExecuteNonQueryAsync();
+        }
     }
 }

@@ -5,34 +5,27 @@ using WebService.Specs.Fixture.Containers;
 
 namespace WebService.Specs.Fixture;
 
-[Binding]
-public class TestServerFixtureCore : IAsyncDisposable
+public class TestServerFixtureCore(int instanceId) : IAsyncDisposable
 {
     private static readonly ConcurrentDictionary<int, TestServerFixtureCore> InstanceMap = [];
 
-    private readonly ITestContainersHost _testContainersHost;
+    private TemporaryDatabase? _database;
     private HttpClient? _httpClient;
     private ScenarioTransaction? _scenarioTransaction;
     private bool _initialized;
+    private Exception? _initializationException;
 
     public static TestServerFixtureCore Instance => InstanceMap.GetOrAdd(
         Environment.CurrentManagedThreadId,
-        _ => new TestServerFixtureCore()
+        instanceId => new TestServerFixtureCore(instanceId)
     );
 
     public HttpClient HttpClient => _httpClient ?? throw new InvalidOperationException("Fixture was not initialized");
 
     public async Task InitializeScenario()
     {
-        if (!_initialized)
-        {
-            await _testContainersHost.StartAsync();
-            CustomWebApplicationFactory<Program> factory = new(AttachDbContext, _testContainersHost.GetConnectionString());
-            _httpClient = factory.CreateClient();
-            _initialized = true;
-        }
-
-        _scenarioTransaction = await ScenarioTransaction.Create(_testContainersHost.GetConnectionString());
+        await InitializeInstanceOnce();
+        _scenarioTransaction = await ScenarioTransaction.Create(_database!.ConnectionString);
     }
 
     public async Task ShutdownScenario()
@@ -46,25 +39,54 @@ public class TestServerFixtureCore : IAsyncDisposable
         _scenarioTransaction = null;
     }
 
-    private TestServerFixtureCore()
-    {
-        _testContainersHost = ExternalTestContainersHost.TryCreate() ??
-                              (ITestContainersHost)new DefaultTestContainersHost();
-    }
-
-    [AfterTestRun]
-    public static async Task AfterTestRun()
+    public static async Task DisposeInstances()
     {
         foreach (TestServerFixtureCore instance in InstanceMap.Values)
         {
             await instance.DisposeAsync();
         }
+
+        InstanceMap.Clear();
     }
 
     public async ValueTask DisposeAsync()
     {
         _httpClient = null;
-        await _testContainersHost.DisposeAsync();
+        if (_database is not null)
+        {
+            await _database.DisposeAsync();
+            _database = null;
+        }
+    }
+
+    private async Task InitializeInstanceOnce()
+    {
+        if (_initializationException is not null)
+        {
+            throw _initializationException;
+        }
+
+        if (!_initialized)
+        {
+            try
+            {
+                await InitializeInstance();
+            }
+            catch (Exception e)
+            {
+                _initializationException = e;
+                throw;
+            }
+
+            _initialized = true;
+        }
+    }
+
+    private async Task InitializeInstance()
+    {
+        _database = await TestContainersProvider.Instance.CreateDatabase("test_" + instanceId);
+        CustomWebApplicationFactory<Program> factory = new(AttachDbContext, _database.ConnectionString);
+        _httpClient = factory.CreateClient();
     }
 
     private void AttachDbContext(DbContext dbContext)

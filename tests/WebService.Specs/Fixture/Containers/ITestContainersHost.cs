@@ -9,5 +9,5 @@ public interface ITestContainersHost
 
     public Task DisposeAsync();
 
-    public string GetConnectionString();
+    public Task<TemporaryDatabase> CreateDatabase(string databaseName);
 }
