@@ -16,7 +16,7 @@ public static class TestRunHooks
     [AfterTestRun]
     public static async Task AfterTestRun()
     {
-        await TestServerFixtureCore.DisposeInstances();
+        await TestServerFixture.HostPool.DisposeAsync();
         await TestContainersProvider.Instance.DisposeAsync();
     }
 }

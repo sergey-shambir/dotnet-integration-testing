@@ -5,20 +5,13 @@ using WebService.Specs.Fixture.Containers;
 
 namespace WebService.Specs.Fixture;
 
-public class TestServerFixtureCore(int instanceId) : IAsyncDisposable
+public class TestServerHost(int instanceId) : IAsyncDisposable
 {
-    private static readonly ConcurrentDictionary<int, TestServerFixtureCore> InstanceMap = [];
-
     private TemporaryDatabase? _database;
     private HttpClient? _httpClient;
     private ScenarioTransaction? _scenarioTransaction;
     private bool _initialized;
     private Exception? _initializationException;
-
-    public static TestServerFixtureCore Instance => InstanceMap.GetOrAdd(
-        Environment.CurrentManagedThreadId,
-        instanceId => new TestServerFixtureCore(instanceId)
-    );
 
     public HttpClient HttpClient => _httpClient ?? throw new InvalidOperationException("Fixture was not initialized");
 
@@ -37,16 +30,6 @@ public class TestServerFixtureCore(int instanceId) : IAsyncDisposable
 
         await _scenarioTransaction!.DisposeAsync();
         _scenarioTransaction = null;
-    }
-
-    public static async Task DisposeInstances()
-    {
-        foreach (TestServerFixtureCore instance in InstanceMap.Values)
-        {
-            await instance.DisposeAsync();
-        }
-
-        InstanceMap.Clear();
     }
 
     public async ValueTask DisposeAsync()

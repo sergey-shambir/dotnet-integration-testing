@@ -3,21 +3,33 @@ using Reqnroll;
 namespace WebService.Specs.Fixture;
 
 [Binding]
-public class TestServerFixture : ITestServerFixture
+public class TestServerFixture : ITestServerFixture, IDisposable
 {
-    private readonly TestServerFixtureCore _fixtureCore = TestServerFixtureCore.Instance;
+    public static readonly TestServerHostPool HostPool = new(size: 2);
 
-    public HttpClient HttpClient => _fixtureCore.HttpClient;
+    private readonly TestServerHost _host = HostPool.Acquire();
+
+    public HttpClient HttpClient => _host.HttpClient;
 
     [BeforeScenario]
     public async Task BeforeScenario()
     {
-        await _fixtureCore.InitializeScenario();
+        await _host.InitializeScenario();
     }
 
     [AfterScenario]
     public async Task AfterScenario()
     {
-        await _fixtureCore.ShutdownScenario();
+        await _host.ShutdownScenario();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _host.DisposeAsync();
+    }
+
+    public void Dispose()
+    {
+        HostPool.Release(_host);
     }
 }
