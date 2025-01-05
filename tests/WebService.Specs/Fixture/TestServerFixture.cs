@@ -23,11 +23,6 @@ public class TestServerFixture : ITestServerFixture, IDisposable
         await _host.ShutdownScenario();
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        await _host.DisposeAsync();
-    }
-
     public void Dispose()
     {
         HostPool.Release(_host);
